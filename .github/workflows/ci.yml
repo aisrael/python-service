@@ -10,9 +10,8 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.7.8"
-      - run: |
-          pip install -r requirements.txt
-          pylint app
+      - run: pip install -r requirements.txt
+      - run: pylint app
 
   pylint:
     runs-on: ubuntu-latest
