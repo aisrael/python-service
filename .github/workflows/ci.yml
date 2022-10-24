@@ -12,6 +12,8 @@ jobs:
           python-version: "3.7.8"
       - run: pip install -r requirements.txt
       - run: pylint app
+      - name: Test with pytest
+        run: pytest app
 
   pylint:
     runs-on: ubuntu-latest
