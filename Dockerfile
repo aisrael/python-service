@@ -10,12 +10,12 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Install Python deps
-COPY pyproject.toml ./
-RUN pip install poetry==1.2.0 && poetry install
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
 
 # Copy in rest of source code
 COPY . .
 
 # Entrypoint
-ENTRYPOINT ["poetry"]
-CMD ["run", "--", "uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--workers", "1", "--timeout-keep-alive", "80"]
+ENTRYPOINT ["uvicorn"]
+CMD ["app.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--workers", "1", "--timeout-keep-alive", "80"]
