@@ -13,7 +13,7 @@ jobs:
       - run: pip install -r requirements.txt
       - run: pylint app
       - name: Test with pytest
-        run: pytest app
+        run: pytest
 
   pylint:
     runs-on: ubuntu-latest
