@@ -10,6 +10,9 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.7.8"
+      - uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: "1.2.2"
       - run: |
           poetry install
           pylint app
