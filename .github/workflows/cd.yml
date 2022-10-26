@@ -26,6 +26,7 @@ jobs:
           push: true
 
   deploy-minikube:
+    needs: build-and-push-docker-image
     runs-on: ubuntu-latest
     environment: minikube
     steps:
