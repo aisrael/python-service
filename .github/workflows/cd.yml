@@ -29,13 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: minikube
     steps:
-      - uses: actions/checkout@v3
-      - name: Replace {{ gitHEAD }} with $GITHUB_SHA
-        uses: jacobtomlinson/gha-find-replace@v2
-        with:
-          include: "kubernetes/**"
-          find: "{{ gitHEAD }}" # we want to remove ref/heads/ from source
-          replace: ${{ github.sha }} # this translates to ref/heads/main on the main branch, but can be any arbitrary string
+      - name: Checkout the project repo
+        uses: actions/checkout@v3
 
       - name: Checkout GitOps repo
         uses: actions/checkout@v3
