@@ -55,9 +55,9 @@ jobs:
       - name: Checkout GitOps repo
         uses: actions/checkout@v3
         with:
-          repository: "aisrael/softconph2022"
+          repository: "aisrael/softcon2022"
           token: ${{ secrets.GITOPS_GITHUB_TOKEN }}
-          path: ".softconph2022"
+          path: ".softcon2022"
 
       - name: Copy templates
         shell: bash
@@ -67,8 +67,8 @@ jobs:
         run: |
           TEMP_DIR=$(mktemp -d)
           echo "TEMP_DIR=${TEMP_DIR}"
-          mv ".softconph2022/.git" "${TEMP_DIR}/.git"
-          TARGET_MANIFESTS_DIR=".softconph2022/python-service/minikube"
+          mv ".softcon2022/.git" "${TEMP_DIR}/.git"
+          TARGET_MANIFESTS_DIR=".softcon2022/python-service/minikube"
           echo "[+] Deleting ${TARGET_MANIFESTS_DIR}"
           rm -rf "${TARGET_MANIFESTS_DIR}"
           echo "[+] Creating (now empty) ${TARGET_MANIFESTS_DIR}"
@@ -77,12 +77,12 @@ jobs:
           echo cp -ra "kubernetes/." "${TARGET_MANIFESTS_DIR}"
           cp -ra "kubernetes/." "${TARGET_MANIFESTS_DIR}"
           echo "[+] Push updated manifests to GitOps repo"
-          mv "${TEMP_DIR}/.git" ".softconph2022/.git"
+          mv "${TEMP_DIR}/.git" ".softcon2022/.git"
           ORIGIN_COMMIT="https://github.com/aisrael/python-service/commit/$GITHUB_SHA"
           COMMIT_MESSAGE="Update from ${ORIGIN_COMMIT}"
           git config --global user.email "${{ env.USER_EMAIL }}"
           git config --global user.name "${{ env.USER_NAME }}"
-          cd ".softconph2022"
+          cd ".softcon2022"
           git add .
           git status
           git diff-index --quiet HEAD || {
