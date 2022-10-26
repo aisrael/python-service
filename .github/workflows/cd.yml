@@ -80,11 +80,12 @@ jobs:
         env:
           USER_NAME: "Alistair Israel"
           USER_EMAIL: "aisrael@gmail.com"
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           echo "[+] Push updated manifests to GitOps repo"
           mv "${TEMP_DIR}/.git" ".softcon2022/.git"
           ORIGIN_COMMIT="https://github.com/aisrael/python-service/commit/$GITHUB_SHA"
-          COMMIT_MESSAGE="Update from ${ORIGIN_COMMIT}"
+          COMMIT_MESSAGE="${ORIGIN_COMMIT}: ${COMMIT_MESSAGE}"
           git config --global user.email "${{ env.USER_EMAIL }}"
           git config --global user.name "${{ env.USER_NAME }}"
           cd ".softcon2022"
