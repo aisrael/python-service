@@ -27,7 +27,7 @@ jobs:
 
   deploy-minikube:
     runs-on: ubuntu-latest
-    env: minikube
+    environment: minikube
     steps:
       - uses: actions/checkout@v3
       - name: Replace {{ gitHEAD }} with $GITHUB_SHA
