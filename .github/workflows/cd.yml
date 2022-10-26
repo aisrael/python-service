@@ -78,7 +78,7 @@ jobs:
             cat "$PATH_TO_DEPLOYMENT" \
             | yq '.metadata.labels."app.kubernetes.io/version" = "${{ github.sha }}"' \
             | yq '.spec.template.metadata.labels."app.kubernetes.io/version" = "${{ github.sha }}"' \
-            | yq '.spec.template.metadata.labels."app.kubernetes.io/version" = "${{ github.sha }}"' \
+            | yq '.spec.template.spec.containers[0].image = "ghcr.io/aisrael/python-service:${{ github.sha }}"' \
             > "${TARGET_MANIFESTS_DIR}/deployment.yaml"
 
       - name: GitOps push
