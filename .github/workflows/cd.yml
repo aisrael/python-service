@@ -1,10 +1,9 @@
-name: "GitOps main"
+name: "GitOps [main]"
 
 on:
   push:
     branches:
       - main
-      - github-actions
 
 jobs:
   build-and-push-docker-image:
