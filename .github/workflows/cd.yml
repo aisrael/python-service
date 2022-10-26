@@ -38,21 +38,6 @@ jobs:
           find: "{{ gitHEAD }}" # we want to remove ref/heads/ from source
           replace: ${{ github.sha }} # this translates to ref/heads/main on the main branch, but can be any arbitrary string
 
-      - name: Update tag using yq
-        id: yq
-        uses: mikefarah/yq@v4.25.3
-        env:
-          PATH_TO_DEPLOYMENT: "kubernetes/deployment.yaml"
-        with:
-          cmd: |
-            echo yq -i '.appVersion="${{ github.sha }}"' "${GITHUB_WORKSPACE}/${PATH_TO_DEPLOYMENT}"
-            yq -i '.appVersion="${{ github.sha }}"' "${GITHUB_WORKSPACE}/${PATH_TO_DEPLOYMENT}"
-
-      - name: Display yq result
-        shell: bash
-        run: |
-          echo ${{ steps.yq.outputs.result }}
-
       - name: Checkout GitOps repo
         uses: actions/checkout@v3
         with:
@@ -60,15 +45,19 @@ jobs:
           token: ${{ secrets.GITOPS_GITHUB_TOKEN }}
           path: ".softcon2022"
 
+      - name: mktemp
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          echo "TEMP_DIR=${TEMP_DIR}" >> $GITHUB_ENV
+          mv ".softcon2022/.git" "${TEMP_DIR}/.git"
+
       - name: Copy templates
         shell: bash
         env:
           USER_NAME: "Alistair Israel"
           USER_EMAIL: "aisrael@gmail.com"
+          TARGET_MANIFESTS_DIR: ".softcon2022/python-service/minikube"
         run: |
-          TEMP_DIR=$(mktemp -d)
-          echo "TEMP_DIR=${TEMP_DIR}"
-          mv ".softcon2022/.git" "${TEMP_DIR}/.git"
           TARGET_MANIFESTS_DIR=".softcon2022/python-service/minikube"
           echo "[+] Deleting ${TARGET_MANIFESTS_DIR}"
           rm -rf "${TARGET_MANIFESTS_DIR}"
@@ -77,6 +66,27 @@ jobs:
           echo "[+] Copying contents of python-service/kubernetes to ${TARGET_MANIFESTS_DIR}"
           echo cp -ra "kubernetes/." "${TARGET_MANIFESTS_DIR}"
           cp -ra "kubernetes/." "${TARGET_MANIFESTS_DIR}"
+
+      - name: Update tag using yq
+        id: yq
+        uses: mikefarah/yq@v4.25.3
+        env:
+          PATH_TO_DEPLOYMENT: "kubernetes/deployment.yaml"
+          TARGET_MANIFESTS_DIR: ".softcon2022/python-service/minikube"
+        with:
+          cmd: |
+            cat "$PATH_TO_DEPLOYMENT" \
+            | yq '.metadata.labels."app.kubernetes.io/version" = "${{ github.sha }}"' \
+            | yq '.spec.template.metadata.labels."app.kubernetes.io/version" = "${{ github.sha }}"' \
+            | yq '.spec.template.metadata.labels."app.kubernetes.io/version" = "${{ github.sha }}"' \
+            > "${TARGET_MANIFESTS_DIR}/deployment.yaml"
+
+      - name: GitOps push
+        shell: bash
+        env:
+          USER_NAME: "Alistair Israel"
+          USER_EMAIL: "aisrael@gmail.com"
+        run: |
           echo "[+] Push updated manifests to GitOps repo"
           mv "${TEMP_DIR}/.git" ".softcon2022/.git"
           ORIGIN_COMMIT="https://github.com/aisrael/python-service/commit/$GITHUB_SHA"
