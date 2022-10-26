@@ -24,3 +24,69 @@ jobs:
           tags: ghcr.io/aisrael/python-service:${{ github.sha }}
           # build on feature branches, push only on main branch
           push: true
+
+  deploy-minikube:
+    runs-on: ubuntu-latest
+    env: minikube
+    steps:
+      - uses: actions/checkout@v3
+      - name: Replace {{ gitHEAD }} with $GITHUB_SHA
+        uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          include: "kubernetes/**"
+          find: "{{ gitHEAD }}" # we want to remove ref/heads/ from source
+          replace: ${{ github.sha }} # this translates to ref/heads/main on the main branch, but can be any arbitrary string
+
+      - name: Update tag using yq
+        id: yq
+        uses: mikefarah/yq@v4.25.3
+        env:
+          PATH_TO_DEPLOYMENT: "kubernetes/deployment.yaml"
+        with:
+          cmd: |
+            echo yq -i '.appVersion="${{ github.sha }}"' "${GITHUB_WORKSPACE}/${PATH_TO_DEPLOYMENT}"
+            yq -i '.appVersion="${{ github.sha }}"' "${GITHUB_WORKSPACE}/${PATH_TO_DEPLOYMENT}"
+
+      - name: Display yq result
+        shell: bash
+        run: |
+          echo ${{ steps.yq.outputs.result }}
+
+      - name: Checkout GitOps repo
+        uses: actions/checkout@v3
+        with:
+          repository: "aisrael/softconph2022"
+          token: ${{ secrets.GITOPS_GITHUB_TOKEN }}
+          path: ".softconph2022"
+
+      - name: Copy templates
+        shell: bash
+        env:
+          USER_NAME: "Alistair Israel"
+          USER_EMAIL: "aisrael@gmail.com"
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          echo "TEMP_DIR=${TEMP_DIR}"
+          mv ".softconph2022/.git" "${TEMP_DIR}/.git"
+          TARGET_MANIFESTS_DIR=".softconph2022/python-service/minikube"
+          echo "[+] Deleting ${TARGET_MANIFESTS_DIR}"
+          rm -rf "${TARGET_MANIFESTS_DIR}"
+          echo "[+] Creating (now empty) ${TARGET_MANIFESTS_DIR}"
+          mkdir -p "${TARGET_MANIFESTS_DIR}"
+          echo "[+] Copying contents of python-service/kubernetes to ${TARGET_MANIFESTS_DIR}"
+          echo cp -ra "kubernetes/." "${TARGET_MANIFESTS_DIR}"
+          cp -ra "kubernetes/." "${TARGET_MANIFESTS_DIR}"
+          echo "[+] Push updated manifests to GitOps repo"
+          mv "${TEMP_DIR}/.git" ".softconph2022/.git"
+          ORIGIN_COMMIT="https://github.com/aisrael/python-service/commit/$GITHUB_SHA"
+          COMMIT_MESSAGE="Update from ${ORIGIN_COMMIT}"
+          git config --global user.email "${{ env.USER_EMAIL }}"
+          git config --global user.name "${{ env.USER_NAME }}"
+          cd ".softconph2022"
+          git add .
+          git status
+          git diff-index --quiet HEAD || {
+            echo git commit --message "${COMMIT_MESSAGE}"
+            git commit --message "${COMMIT_MESSAGE}"
+            git push
+          }
